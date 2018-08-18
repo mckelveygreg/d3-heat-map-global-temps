@@ -11,6 +11,10 @@ const buildGraph = (data) => {
     const width = root.clientWidth;
     const height = root.clientHeight;
     const padding = 50;
+    const yearMax = d3.max(dataset, d => d.year);
+    const yearMin = d3.min(dataset, d => d.year);
+    const cellWidth = (width - padding)/(yearMax - yearMin);
+    const cellHeight = (height -padding)/12;
     
     const svg = d3.select(root)
                     .append('svg')
@@ -30,24 +34,28 @@ const buildGraph = (data) => {
         .attr('transform', `translate(${width/2}, 75)`);
 
     // x-scale
-    const yearMax = d3.max(dataset, d => d.year);
-    const yearMin = d3.min(dataset, d => d.year);
     const parseTimeYear = d3.timeParse('%Y');
     const xScaleYear = d3.scaleTime()
                             .domain([parseTimeYear(yearMin), parseTimeYear(yearMax)])
                             .range([padding, width-padding])
-    const xAxis = d3.axisBottom(xScaleYear).tickFormat(d3.timeFormat('%Y'));
+    const xAxis = d3.axisBottom(xScaleYear).tickFormat(d3.timeFormat('%Y')).tickArguments([d3.timeYear.every(10)]);
 
     // Y-Scale, Months
-    const formatMonth = d3.timeFormat('%B');
+    const formatMonth = (month) => {
+        let date = new Date(0);
+        date.setUTCMonth(month);
+        return d3.timeFormat('%B')(date);
+    }
    
-    const yScaleMonth = d3.scaleTime()
-    .domain([new Date(2000, 0, 1, 0), new Date(2000, 11, 1, 0)])
+    const yScaleMonth = d3.scaleBand()
+    .domain([1,2,3,4,5,6,7,8,9,10,11,12])
     .range([padding,height - padding])
     //.ticks(d3.timeYear.every(1));;
-                        
-    const yAxis = d3.axisLeft(yScaleMonth)
-                    .tickFormat(formatMonth)
+    
+    const yAxis = d3.axisLeft(yScaleMonth)                
+                    .tickFormat(formatMonth);
+
+    console.log(yScaleMonth(0));
                     
     // Axes
     svg.append('g')
@@ -58,4 +66,15 @@ const buildGraph = (data) => {
         .attr('transform', `translate(${padding}, 0)`)
         .property('id', 'y-axis')
         .call(yAxis);
+
+    // Rects Placement
+    svg.selectAll('rect')
+        .data(dataset)
+        .enter()
+        .append('rect')
+        .attr('x', d => xScaleYear(d.year))
+        .attr('y', d => yScaleMonth(d.month))
+        .attr('width', cellWidth)
+        .attr('height', cellHeight)
+        .attr('fill', 'red');    
 }
