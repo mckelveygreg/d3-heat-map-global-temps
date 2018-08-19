@@ -13,6 +13,8 @@ const buildGraph = (data) => {
     const padding = 50;
     const yearMax = d3.max(dataset, d => d.year);
     const yearMin = d3.min(dataset, d => d.year);
+    const tempMax = d3.max(dataset, d => d.variance);
+    const tempMin = d3.min(dataset, d => d.variance);
     const cellWidth = (width - padding)/(yearMax - yearMin);
     const cellHeight = (height -padding)/12;
     
@@ -67,19 +69,23 @@ const buildGraph = (data) => {
         .property('id', 'y-axis')
         .call(yAxis);
 
+    // Color Scale
+    const colorScale = d3.scaleSequential()
+                        .domain([tempMax, tempMin])
+                        .interpolator(d3.interpolateRdYlBu);
+
     // Rects Placement
     svg.selectAll('rect')
         .data(dataset)
         .enter()
         .append('rect')
-        .attr('x', d => {
-            console.log(xScaleYear(parseTimeYear(d.year)));
-            return xScaleYear(parseTimeYear(d.year));})
+        .attr('x', d => xScaleYear(parseTimeYear(d.year)))
         .attr('y', d => yScaleMonth(d.month))
         .attr('width', cellWidth)
         .attr('height', cellHeight)
         .attr('class', 'cell')
-        .attr('data-month', d => formatMonth(d.month))
+        .attr('data-month', d => d.month - 1)
         .attr('data-year', d => d.year)
-        .attr('fill', 'red');    
+        .attr('data-temp', d => d.variance)
+        .attr('fill', d => colorScale(d.variance));    
 }
