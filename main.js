@@ -38,7 +38,8 @@ const buildGraph = (data) => {
     const xScaleYear = d3.scaleTime()
                             .domain([parseTimeYear(yearMin), parseTimeYear(yearMax)])
                             .range([padding, width-padding])
-    const xAxis = d3.axisBottom(xScaleYear).tickFormat(d3.timeFormat('%Y')).tickArguments([d3.timeYear.every(10)]);
+    const xAxis = d3.axisBottom(xScaleYear).tickFormat(d3.timeFormat('%Y'))
+                    .tickArguments([d3.timeYear.every(10)]);
 
     // Y-Scale, Months
     const formatMonth = (month) => {
@@ -48,9 +49,8 @@ const buildGraph = (data) => {
     }
    
     const yScaleMonth = d3.scaleBand()
-    .domain([1,2,3,4,5,6,7,8,9,10,11,12])
-    .range([padding,height - padding])
-    //.ticks(d3.timeYear.every(1));;
+                .domain([1,2,3,4,5,6,7,8,9,10,11,12])
+                .range([padding,height - padding])
     
     const yAxis = d3.axisLeft(yScaleMonth)                
                     .tickFormat(formatMonth);
@@ -72,9 +72,14 @@ const buildGraph = (data) => {
         .data(dataset)
         .enter()
         .append('rect')
-        .attr('x', d => xScaleYear(d.year))
+        .attr('x', d => {
+            console.log(xScaleYear(parseTimeYear(d.year)));
+            return xScaleYear(parseTimeYear(d.year));})
         .attr('y', d => yScaleMonth(d.month))
         .attr('width', cellWidth)
         .attr('height', cellHeight)
+        .attr('class', 'cell')
+        .attr('data-month', d => formatMonth(d.month))
+        .attr('data-year', d => d.year)
         .attr('fill', 'red');    
 }
