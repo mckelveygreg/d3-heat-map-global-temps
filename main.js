@@ -16,8 +16,8 @@ const buildGraph = (data) => {
     const yearMin = d3.min(dataset, d => d.year);
     const tempMax = d3.max(dataset, d => d.variance);
     const tempMin = d3.min(dataset, d => d.variance);
-    const cellWidth = (width)/(yearMax - yearMin);
-    const cellHeight = (height)/12;
+    const cellWidth = Math.ceil((width)/(yearMax - yearMin));
+    const cellHeight = Math.ceil((height)/12);
     
     const svg = d3.select(root)
                     .append('svg')
@@ -72,10 +72,23 @@ const buildGraph = (data) => {
         .call(yAxis);
 
     // Color Scale
+    // Smooth Colors
     const colors = d3.quantize(d3.interpolateRdYlBu, 10).reverse();
-    const colorScale = d3.scaleQuantize()
-                        .domain([tempMin, tempMax])
-                        .range(colors);
+    const colorScale = d3.scaleSequential()
+                        .domain([tempMax, tempMin])
+                        .interpolator(d3.interpolateRdYlBu);
+    // Blocky colors
+    // const colorScale = d3.scaleSequential()
+    //                     .domain([tempMax, tempMin])
+    //                     .interpolator(d3.interpolateRdYlBu);
+
+    // Tooltip
+    const tooltip = d3.select('body')
+                        .append('div')
+                        .style('position', 'absolute')
+                        .style('opacity', '0')
+                        .text('filler text')
+                        .attr('id', 'tooltip');
 
     // Rects Placement
     svg.selectAll('rect')
@@ -90,20 +103,30 @@ const buildGraph = (data) => {
         .attr('data-month', d => d.month - 1)
         .attr('data-year', d => d.year)
         .attr('data-temp', d => d.variance)
-        .attr('fill', d => colorScale(d.variance));
+        .attr('fill', d => colorScale(d.variance))
+        .on('mouseover', (d, i) => (
+            tooltip.style('opacity', '0.8')
+                    .attr('data-year', d.year)
+                    .style('z-index', '10')
+                    .html(
+                        `${formatMonth(d.month)} - ${d.year} </br>
+                        Temp: ${d.variance + 8.66}&#8451;</br>
+                        Variance: ${d.variance}&#8451;`
+                    )))
+                    .on('mousemove', () => (
+                        tooltip.style('top', (d3.event.pageY - 5) + 'px')
+                                .style('left', (d3.event.pageX + 10) + 'px')))
+                    .on('mouseout', () => tooltip.style('opacity', '0').style('z-index', '-1'));
         
     // Legend
     
-    const legendWidth = 300;
+    const legendWidth = width * 0.85;
 
     //console.log(legendScaleText);
-
+    
     const legendScale = d3.scaleLinear()
-                            .domain(colorScale.domain().reverse())
+                            .domain(colorScale.domain())
                             .range([legendWidth, 0]);
-    const legendColorScale = d3.scaleLinear()
-                                .domain([0, colors.length-1])
-                                .range([legendWidth, 0]);
  
     const legendContainer = svg.append('g')
                             .attr('id', 'legend')
@@ -111,7 +134,8 @@ const buildGraph = (data) => {
                             .attr('y', height + 50)
                             .attr('width', legendWidth)
                             .attr('height', 50)
-                            .attr('transform', `translate(0,${height + 20})`); 
+                            .attr('alignment-baseline', 'middle')
+                            .attr('transform', `translate(${legendWidth*0.1},${height + 20})`); 
 
     const legendAxis = d3.axisBottom(legendScale)
                             .tickFormat(d3.format('.1f'))
@@ -119,6 +143,10 @@ const buildGraph = (data) => {
     legendContainer.append('g')
                     .attr('transform', 'translate(0,20)')
                     .call(legendAxis);
+    legendContainer.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('transform', `translate(${legendWidth/2},58)`)
+                    .text('Change in Celcius from Base Temp');
     //--- Rect Legend
     // legendContainer.selectAll('.legend')
     //     .data(colors.reverse())

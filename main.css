@@ -26,3 +26,11 @@ html, body {
     border-radius: 3px;
     margin-bottom: 20px;
 }
+
+#tooltip {
+    background: #333;
+    color: #bbb;
+    padding: 5px;
+    transition: .1s ease;
+
+}
