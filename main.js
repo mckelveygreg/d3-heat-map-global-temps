@@ -117,18 +117,37 @@ const buildGraph = (data) => {
                             .tickFormat(d3.format('.1f'))
                             .ticks(10);
     legendContainer.append('g')
-                    .attr('transform', 'translate(0,51)')
+                    .attr('transform', 'translate(0,20)')
                     .call(legendAxis);
-    legendContainer.selectAll('.legend')
-        .data(colors.reverse())
-        .enter()
-        .append('rect')
-        .attr('class','legend')
-        .attr('x', (d,i,a) => legendColorScale(i)) 
-        .attr('y', 0)
-        .attr('width', legendWidth/colors.length)
-        .attr('height', 50)
-        .attr('fill', (d,i) => d);
+    //--- Rect Legend
+    // legendContainer.selectAll('.legend')
+    //     .data(colors.reverse())
+    //     .enter()
+    //     .append('rect')
+    //     .attr('class','legend')
+    //     .attr('x', (d,i,a) => legendColorScale(i)) 
+    //     .attr('y', 0)
+    //     .attr('width', legendWidth/colors.length)
+    //     .attr('height', 50)
+    //     .attr('fill', (d,i) => d);
 
+    // linearGradient Legend
+    // href: https://www.visualcinnamon.com/2016/05/smooth-color-legend-d3-svg-gradient.html
+    const defs = svg.append('defs');
+    const linearGradient = defs.append('linearGradient')
+                            .attr('id', 'linear-gradient');
+    const colorScaleTest = d3.scaleLinear()
+                            .range(colors);
+    linearGradient.selectAll('stop')
+                    .data( colorScaleTest.range())
+                    .enter().append('stop')
+                    .attr('offset', (d,i) => i/(colorScaleTest.range().length-1))
+                    .attr('stop-color', d => d);
     
+
+    //Draw the rectangle and fill with gradient
+    legendContainer.append("rect")
+        .attr("width", legendWidth)
+        .attr("height", 20)
+        .style("fill", "url(#linear-gradient)");
 }
