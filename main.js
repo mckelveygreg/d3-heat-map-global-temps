@@ -43,7 +43,8 @@ const buildGraph = (data) => {
     const xScaleYear = d3.scaleTime()
                             .domain([parseTimeYear(yearMin), parseTimeYear(yearMax)])
                             .range([0, width])
-    const xAxis = d3.axisBottom(xScaleYear).tickFormat(d3.timeFormat('%Y'))
+    const xAxis = d3.axisBottom(xScaleYear)
+                    .tickFormat(d3.timeFormat('%Y'))
                     .tickArguments([d3.timeYear.every(10)]);
 
     // Y-Scale, Months
@@ -71,9 +72,10 @@ const buildGraph = (data) => {
         .call(yAxis);
 
     // Color Scale
-    const colorScale = d3.scaleSequential()
-                        .domain([tempMax, tempMin])
-                        .interpolator(d3.interpolateRdYlBu);
+    const colors = d3.quantize(d3.interpolateRdYlBu, 10).reverse();
+    const colorScale = d3.scaleQuantize()
+                        .domain([tempMin, tempMax])
+                        .range(colors);
 
     // Rects Placement
     svg.selectAll('rect')
@@ -88,5 +90,45 @@ const buildGraph = (data) => {
         .attr('data-month', d => d.month - 1)
         .attr('data-year', d => d.year)
         .attr('data-temp', d => d.variance)
-        .attr('fill', d => colorScale(d.variance));    
+        .attr('fill', d => colorScale(d.variance));
+        
+    // Legend
+    
+    const legendWidth = 300;
+
+    //console.log(legendScaleText);
+
+    const legendScale = d3.scaleLinear()
+                            .domain(colorScale.domain().reverse())
+                            .range([legendWidth, 0]);
+    const legendColorScale = d3.scaleLinear()
+                                .domain([0, colors.length-1])
+                                .range([legendWidth, 0]);
+ 
+    const legendContainer = svg.append('g')
+                            .attr('id', 'legend')
+                            .attr('x', 0)
+                            .attr('y', height + 50)
+                            .attr('width', legendWidth)
+                            .attr('height', 50)
+                            .attr('transform', `translate(0,${height + 20})`); 
+
+    const legendAxis = d3.axisBottom(legendScale)
+                            .tickFormat(d3.format('.1f'))
+                            .ticks(10);
+    legendContainer.append('g')
+                    .attr('transform', 'translate(0,51)')
+                    .call(legendAxis);
+    legendContainer.selectAll('.legend')
+        .data(colors.reverse())
+        .enter()
+        .append('rect')
+        .attr('class','legend')
+        .attr('x', (d,i,a) => legendColorScale(i)) 
+        .attr('y', 0)
+        .attr('width', legendWidth/colors.length)
+        .attr('height', 50)
+        .attr('fill', (d,i) => d);
+
+    
 }
